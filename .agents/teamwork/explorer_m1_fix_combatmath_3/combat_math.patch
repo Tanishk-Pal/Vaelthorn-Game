@@ -1,0 +1,130 @@
+--- a/src/engine/combat_math.js
++++ b/src/engine/combat_math.js
+@@ -91,14 +91,16 @@ function calculateDamageMitigation(rawDamage, defense = 0, config = DEFAULT_COM
+         return 0;
+     }
+ 
++    const cfg = config || DEFAULT_COMBAT_CONFIG;
+     const safeDefense = Number.isFinite(defense) ? defense : 0;
+-    const minDef = Number.isFinite(config.minDefense) ? config.minDefense : DEFAULT_COMBAT_CONFIG.minDefense;
++    const minDef = Number.isFinite(cfg.minDefense) ? cfg.minDefense : DEFAULT_COMBAT_CONFIG.minDefense;
+     const clampedDefense = Math.max(minDef, safeDefense);
+-    const softCap = Number.isFinite(config.defenseSoftCap) ? config.defenseSoftCap : DEFAULT_COMBAT_CONFIG.defenseSoftCap;
++    const softCap = (Number.isFinite(cfg.defenseSoftCap) && cfg.defenseSoftCap > 0)
++        ? cfg.defenseSoftCap 
++        : DEFAULT_COMBAT_CONFIG.defenseSoftCap;
+ 
+-    const denominator = 1.0 + (clampedDefense / softCap);
+-    // Denominator is guaranteed >= 0.1 due to minDefense clamp (-90 -> 1 - 0.90 = 0.1)
++    const denominator = Math.max(0.01, 1.0 + (clampedDefense / softCap));
+     const mitigated = Math.round(rawDamage / denominator);
+     return Math.max(1, mitigated);
+ }
+@@ -234,12 +236,13 @@ function applyDamage(target, damagePackage, config = DEFAULT_COMBAT_CONFIG) {
+     }
+ 
+     // 5. Evaluate Stagger & Riposte Multiplier
++    const cfg = config || DEFAULT_COMBAT_CONFIG;
+     const isStaggered = Boolean(target.poiseState?.isStaggered);
+     const rawDmg = Number.isFinite(damagePackage?.rawDamage) ? damagePackage.rawDamage : 0;
+-    const { damage: amplifiedDamage, isCritical } = calculateRiposteDamage(rawDmg, isStaggered, config.riposteMultiplier);
++    const { damage: amplifiedDamage, isCritical } = calculateRiposteDamage(rawDmg, isStaggered, cfg.riposteMultiplier);
+ 
+     // 6. Mitigate against Target Defense
+     const targetDefense = Number.isFinite(target.defense) ? target.defense : 0;
+-    const finalDamage = calculateDamageMitigation(amplifiedDamage, targetDefense, config);
++    const finalDamage = calculateDamageMitigation(amplifiedDamage, targetDefense, cfg);
+ 
+     // 7. Deduct Health & Clamp to 0
+     target.hp = Math.max(0, target.hp - finalDamage);
+@@ -251,7 +254,7 @@ function applyDamage(target, damagePackage, config = DEFAULT_COMBAT_CONFIG) {
+     // 9. Apply Poise Damage
+     let poiseBroken = false;
+     if (target.poiseState && Number.isFinite(damagePackage?.poiseDamage) && damagePackage.poiseDamage > 0) {
+-        const poiseRes = applyPoiseDamage(target.poiseState, damagePackage.poiseDamage, config);
++        const poiseRes = applyPoiseDamage(target.poiseState, damagePackage.poiseDamage, cfg);
+         poiseBroken = poiseRes.poiseBroken;
+     }
+ 
+@@ -316,11 +319,16 @@ function applyPoiseDamage(poiseState, poiseDamage, config = DEFAULT_COMBAT_CONF
+     }
+ 
+     poiseState.currentPoise = Math.max(0, poiseState.currentPoise - dmg);
++    // Micro-poise epsilon threshold guarding against IEEE-754 precision drift
++    if (poiseState.currentPoise <= 1e-5) {
++        poiseState.currentPoise = 0;
++    }
+ 
+     let poiseBroken = false;
+     if (poiseState.currentPoise <= 0) {
+         poiseState.isStaggered = true;
+-        const staggerDur = Number.isFinite(config.standardStaggerDuration) 
+-            ? config.standardStaggerDuration 
++        const cfg = config || DEFAULT_COMBAT_CONFIG;
++        const staggerDur = Number.isFinite(cfg.standardStaggerDuration) 
++            ? cfg.standardStaggerDuration 
+             : DEFAULT_COMBAT_CONFIG.standardStaggerDuration;
+         poiseState.staggerTimer = staggerDur;
+         poiseState.currentPoise = 0;
+@@ -357,10 +365,13 @@ function updatePoise(poiseState, dt) {
+     } else {
+         poiseState.timeSincePoiseDamage += dt;
+         if (poiseState.timeSincePoiseDamage >= poiseState.regenDelay) {
+-            poiseState.currentPoise = Math.min(
+-                poiseState.maxPoise,
+-                poiseState.currentPoise + poiseState.regenRate * dt
+-            );
++            const activeRegenDt = Math.min(dt, Math.max(0, poiseState.timeSincePoiseDamage - poiseState.regenDelay));
++            if (activeRegenDt > 0) {
++                poiseState.currentPoise = Math.min(
++                    poiseState.maxPoise,
++                    poiseState.currentPoise + poiseState.regenRate * activeRegenDt
++                );
++            }
+         }
+     }
+ 
+@@ -378,9 +389,12 @@ function calculatePoise(currentPoise, poiseDamage) {
+     const cur = Math.max(0, Number.isFinite(currentPoise) ? currentPoise : 0);
+     const dmg = Math.max(0, Number.isFinite(poiseDamage) ? poiseDamage : 0);
+-    const rem = Math.max(0, cur - dmg);
++    let rem = Math.max(0, cur - dmg);
++    if (rem <= 1e-5) {
++        rem = 0;
++    }
+     return {
+         remainingPoise: rem,
+         isBroken: rem <= 0
+     };
+ }
+@@ -453,10 +467,14 @@ function updateResonance(resonanceState, dt, config = DEFAULT_COMBAT_CONFIG) {
+     if (!resonanceState || !Number.isFinite(dt) || dt <= 0) return resonanceState;
+ 
+     resonanceState.idleTimer += dt;
+-    const decayDelay = Number.isFinite(config.resonanceDecayDelay) ? config.resonanceDecayDelay : DEFAULT_COMBAT_CONFIG.resonanceDecayDelay;
+-    const decayRate = Number.isFinite(config.resonanceDecayRate) ? config.resonanceDecayRate : DEFAULT_COMBAT_CONFIG.resonanceDecayRate;
++    const cfg = config || DEFAULT_COMBAT_CONFIG;
++    const decayDelay = Number.isFinite(cfg.resonanceDecayDelay) ? cfg.resonanceDecayDelay : DEFAULT_COMBAT_CONFIG.resonanceDecayDelay;
++    const decayRate = Number.isFinite(cfg.resonanceDecayRate) ? cfg.resonanceDecayRate : DEFAULT_COMBAT_CONFIG.resonanceDecayRate;
+ 
+     if (resonanceState.idleTimer >= decayDelay && resonanceState.current > 0) {
+-        resonanceState.current = Math.max(0.0, resonanceState.current - decayRate * dt);
+-        resonanceState.isOverdrive = (resonanceState.current >= resonanceState.max);
++        const activeDecayDt = Math.min(dt, Math.max(0, resonanceState.idleTimer - decayDelay));
++        if (activeDecayDt > 0) {
++            resonanceState.current = Math.max(0.0, resonanceState.current - decayRate * activeDecayDt);
++            resonanceState.isOverdrive = (resonanceState.current >= resonanceState.max);
++        }
+     }
+ 
+     return resonanceState;
+@@ -676,7 +694,7 @@ function solveLaunchVelocityForSpeed(x0, y0, targetX, targetY, launchSpeed, pre
+             return {
+                 vx: 0,
+                 vy: -launchSpeed,
+                 vz: 0,
+-                timeOfFlight: Math.abs(dy) / launchSpeed,
++                timeOfFlight: calculateFlightTime(y0, -launchSpeed, targetY, gravity),
+                 launchAngle: -Math.PI / 2
+             };
+         }

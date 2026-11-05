@@ -1,0 +1,177 @@
+diff --git a/src/engine/kinematics.js b/src/engine/kinematics.js
+--- a/src/engine/kinematics.js
++++ b/src/engine/kinematics.js
+@@ -43,7 +43,8 @@ const Constants = Object.freeze({
+     JUMP_BUFFER_TIME: 0.12,
+     JUMP_HEIGHT: 2.4,
+     STICKY_GROUND_VELOCITY: -2.0,
+-    PLANE_TOLERANCE: 0.001
++    PLANE_TOLERANCE: 0.001,
++    MAX_DELTA_TIME: 0.05
+ });
+ 
+ /**
+@@ -217,31 +218,46 @@ function clamp2DPlane(entity, tolerance = DEFAULT_KINEMATICS_CONFIG.zTolerance)
+  * @param {Array<Object>} [platforms]
+  * @param {number} [dt]
+  * @param {Object} [config]
++ * @param {number} [prevY] - Pre-integration vertical coordinate. Reconstructed defensively if omitted.
+  */
+-function resolveGroundCollision(entity, platforms = [], dt = 0.0, config = DEFAULT_KINEMATICS_CONFIG) {
++function resolveGroundCollision(entity, platforms = [], dt = 0.0, config = DEFAULT_KINEMATICS_CONFIG, prevY = undefined) {
+     let groundLevel = entity.groundLevel !== undefined ? entity.groundLevel : 0.0;
+ 
++    const priorY = (prevY !== undefined && Number.isFinite(prevY))
++        ? prevY
++        : ((Number.isFinite(entity.y) && Number.isFinite(entity.vy) && Number.isFinite(dt))
++            ? (entity.y - entity.vy * dt)
++            : entity.y);
++
++    const currentY = entity.y;
++
+     // Check elevated platforms
+     if (Array.isArray(platforms) && platforms.length > 0) {
+         for (let i = 0; i < platforms.length; i++) {
+             const p = platforms[i];
+             if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y) || !Number.isFinite(p.width)) continue;
+             
+             const halfW = p.width * 0.5;
+             if (entity.x >= (p.x - halfW) && entity.x <= (p.x + halfW)) {
+-                if (entity.y >= p.y && (entity.y + entity.vy * dt) <= (p.y + 0.1)) {
+-                    if (p.y > groundLevel) {
+-                        groundLevel = p.y;
++                // Swept collision: entity must be descending or stationary (vy <= 0)
++                if (entity.vy <= 0.0) {
++                    const wasAbove = priorY >= (p.y - 0.01);
++                    const nowAtOrBelow = currentY <= (p.y + 0.001);
++                    if (wasAbove && nowAtOrBelow) {
++                        if (p.y > groundLevel) {
++                            groundLevel = p.y;
++                        }
+                     }
+                 }
+             }
+         }
+     }
+ 
+     const coyote = config.coyoteTime ?? config.COYOTE_TIME ?? DEFAULT_KINEMATICS_CONFIG.coyoteTime;
+     const sticky = config.stickyGroundVelocity ?? config.STICKY_GROUND_VELOCITY ?? DEFAULT_KINEMATICS_CONFIG.stickyGroundVelocity;
+ 
+-    if (entity.y <= groundLevel) {
++    if (entity.y <= (groundLevel + 0.001)) {
+         entity.y = groundLevel;
+         entity.vy = sticky;
+         entity.isGrounded = true;
+@@ -270,6 +286,14 @@ function updateKinematics(entity, input, dt, config = DEFAULT_KINEMATICS_CONFIG
+         clamp2DPlane(entity, config.zTolerance ?? config.PLANE_TOLERANCE);
+         return entity;
+     }
++
++    // Clamp delta-time against maxDeltaTime to prevent physics explosion / tunneling
++    const maxDt = (config && Number.isFinite(config.maxDeltaTime))
++        ? config.maxDeltaTime
++        : ((config && Number.isFinite(config.MAX_DELTA_TIME))
++            ? config.MAX_DELTA_TIME
++            : DEFAULT_KINEMATICS_CONFIG.maxDeltaTime);
++    const effectiveDt = Math.min(maxDt, dt);
++    dt = effectiveDt;
+ 
+     // Defensive NaN / Infinity guards on entity coordinates
+     if (!Number.isFinite(entity.x)) entity.x = 0.0;
+@@ -370,9 +394,10 @@ function updateKinematics(entity, input, dt, config = DEFAULT_KINEMATICS_CONFIG
+     }
+ 
+     // 7. Symplectic (Semi-Implicit) Euler Position Integration
++    const prevY = entity.y;
+     entity.x += entity.vx * dt;
+     entity.y += entity.vy * dt;
+ 
+     // 8. Ground & Platform Collision Resolution
+-    resolveGroundCollision(entity, platforms, dt, config);
++    resolveGroundCollision(entity, platforms, dt, config, prevY);
+ 
+     // 9. Enforce 2.5D Plane Constraint
+diff --git a/tests/unit/kinematics.test.js b/tests/unit/kinematics.test.js
+--- a/tests/unit/kinematics.test.js
++++ b/tests/unit/kinematics.test.js
+@@ -232,4 +232,83 @@ describe('Kinematics Engine Unit Test Suite', () => {
+         });
+     });
++
++    describe('Elevated Platform Swept Collision & Timestep Clamping', () => {
++        it('catches falling entity at terminal velocity (-40 m/s) and lands on elevated platform without tunneling', () => {
++            const platform = [{ x: 0, y: 5.0, width: 6.0 }];
++            const entity = createKinematicsEntity({ x: 0.0, y: 5.2, vy: -40.0, isGrounded: false });
++            const input = createDefaultInput();
++            // Step displacement: -40 * 0.016 = -0.64m -> without swept collision y would be 4.56m (< 5.0)
++            updateKinematics(entity, input, 0.016, DEFAULT_KINEMATICS_CONFIG, platform);
++            assert.equal(entity.y, 5.0, 'Entity must land exactly on platform elevation y=5.0');
++            assert.equal(entity.isGrounded, true, 'Entity must be marked isGrounded=true');
++            assert.equal(entity.vy, DEFAULT_KINEMATICS_CONFIG.stickyGroundVelocity, 'Sticky ground velocity must be applied');
++            assert.equal(entity.coyoteTimer, DEFAULT_KINEMATICS_CONFIG.coyoteTime, 'Coyote timer must be refreshed upon landing');
++        });
++
++        it('allows entity jumping upward through elevated platform to pass through freely', () => {
++            const platform = [{ x: 0, y: 5.0, width: 6.0 }];
++            const entity = createKinematicsEntity({ x: 0.0, y: 4.8, vy: 12.0, isGrounded: false });
++            const input = createDefaultInput();
++            input.jumpHeld = true;
++            updateKinematics(entity, input, 0.016, DEFAULT_KINEMATICS_CONFIG, platform);
++            assert.ok(entity.y > 4.8, 'Entity y should ascend past platform');
++            assert.equal(entity.isGrounded, false, 'Entity must not be grounded while ascending through platform');
++        });
++
++        it('maintains grounded state on elevated platform across consecutive frames with sticky ground velocity', () => {
++            const platform = [{ x: 0, y: 5.0, width: 6.0 }];
++            const entity = createKinematicsEntity({ x: 0.0, y: 5.0, vy: -2.0, isGrounded: true });
++            const input = createDefaultInput();
++            for (let frame = 0; frame < 60; frame++) {
++                updateKinematics(entity, input, 0.016, DEFAULT_KINEMATICS_CONFIG, platform);
++                assert.equal(entity.y, 5.0, `Frame ${frame}: entity must stay glued to y=5.0`);
++                assert.equal(entity.isGrounded, true, `Frame ${frame}: entity must stay grounded`);
++            }
++        });
++
++        it('transitions to ungrounded and preserves coyote time when entity walks off platform ledge', () => {
++            const platform = [{ x: 0, y: 5.0, width: 4.0 }]; // Span: [-2.0, 2.0]
++            const entity = createKinematicsEntity({ x: 1.9, y: 5.0, isGrounded: true, facing: 1, coyoteTimer: 0.12 });
++            const input = createDefaultInput();
++            input.horizontal = 1.0;
++            updateKinematics(entity, input, 0.02, DEFAULT_KINEMATICS_CONFIG, platform);
++            assert.ok(entity.x > 2.0, 'Entity stepped past platform right boundary');
++            assert.equal(entity.isGrounded, false, 'Entity must transition to isGrounded=false');
++            assert.ok(entity.coyoteTimer > 0, 'Coyote timer must remain active for grace jump');
++        });
++
++        it('selects the highest platform when entity falls through multiple horizontally overlapping platforms', () => {
++            const platforms = [
++                { x: 0, y: 3.0, width: 10.0 },
++                { x: 0, y: 7.0, width: 6.0 }
++            ];
++            const entity = createKinematicsEntity({ x: 0.0, y: 7.2, vy: -40.0, isGrounded: false });
++            const input = createDefaultInput();
++            updateKinematics(entity, input, 0.016, DEFAULT_KINEMATICS_CONFIG, platforms);
++            assert.equal(entity.y, 7.0, 'Entity must land on the top-most platform y=7.0');
++            assert.equal(entity.isGrounded, true);
++        });
++
++        it('clamps excessive delta-time (dt = 2.0s) to maxDeltaTime (0.05s) preventing physics explosion', () => {
++            const entity = createKinematicsEntity({ x: 0.0, y: 0.0, isGrounded: true });
++            const input = createDefaultInput();
++            input.horizontal = 1.0;
++            // Massive frame lag spike: dt = 2.0s
++            updateKinematics(entity, input, 2.0, DEFAULT_KINEMATICS_CONFIG);
++            // Effective dt = 0.05s -> dx = 9.0 * 0.05 = 0.45m (NOT 18.0m!)
++            assert.ok(Math.abs(entity.x - 0.45) < 1e-5, `Entity x must be 0.45m, got ${entity.x}`);
++        });
++
++        it('respects custom maxDeltaTime passed in config', () => {
++            const entity = createKinematicsEntity({ x: 0.0, y: 0.0, isGrounded: true });
++            const input = createDefaultInput();
++            input.horizontal = 1.0;
++            updateKinematics(entity, input, 2.0, { ...DEFAULT_KINEMATICS_CONFIG, maxDeltaTime: 0.02 });
++            // Effective dt = 0.02s -> dx = 9.0 * 0.02 = 0.18m
++            assert.ok(Math.abs(entity.x - 0.18) < 1e-5, `Entity x must be 0.18m, got ${entity.x}`);
++        });
++    });
+ });

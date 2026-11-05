@@ -1,0 +1,30 @@
+--- a/tests/unit/combat_math.test.js
++++ b/tests/unit/combat_math.test.js
+@@ -166,8 +166,12 @@ describe('Combat Math Unit Test Suite', () => {
+             updatePoise(state, 2.0);
+             assert.equal(state.currentPoise, 50);
+ 
+-            // Advance past delay (another 1.5s -> total 3.5s >= 3.0s)
++            // Advance past delay (another 1.5s -> total 3.5s >= 3.0s; active regen = 3.5 - 3.0 = 0.5s @ 20 u/s = +10)
+             updatePoise(state, 1.5);
++            assert.ok(Math.abs(state.currentPoise - 60) < 1e-4);
++
++            // Advance another 1.0s (full active regen: 1.0s @ 20 u/s = +20)
++            updatePoise(state, 1.0);
+             assert.ok(Math.abs(state.currentPoise - 80) < 1e-4);
+         });
+ 
+@@ -223,8 +227,12 @@ describe('Combat Math Unit Test Suite', () => {
+             updateResonance(state, 3.0);
+             assert.equal(state.current, 50);
+ 
+-            // 1.5 more seconds (total 4.5s >= 4.0s delay)
++            // 1.5 more seconds (total 4.5s >= 4.0s delay; active decay = 4.5 - 4.0 = 0.5s @ 5.0 u/s = 2.5)
+             updateResonance(state, 1.5);
++            assert.ok(Math.abs(state.current - 47.5) < 1e-4);
++
++            // 1.0 more second of active decay (1.0s @ 5.0 u/s = 5.0)
++            updateResonance(state, 1.0);
+             assert.ok(Math.abs(state.current - 42.5) < 1e-4);
+         });
+ 
