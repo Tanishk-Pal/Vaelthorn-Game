@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VAELTHORN: The Oath of Darkness — 2.5D Playable Prototype</title>
+    <title>VAELTHORN: The Oath of Darkness — Production 2.5D Experience</title>
     <style>
         * {
             box-sizing: border-box;
@@ -16,7 +16,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #050608;
+            background-color: #040508;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #e0e5eb;
         }
@@ -28,7 +28,6 @@
             left: 0;
             z-index: 1;
         }
-        /* HUD UI */
         #ui-layer {
             position: absolute;
             top: 0;
@@ -40,7 +39,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 24px;
+            padding: 20px;
         }
         .hud-header {
             display: flex;
@@ -50,33 +49,49 @@
         .player-status {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            background: linear-gradient(135deg, rgba(12, 14, 20, 0.88), rgba(24, 28, 40, 0.7));
-            padding: 16px 20px;
+            gap: 6px;
+            background: linear-gradient(135deg, rgba(10, 12, 18, 0.92), rgba(20, 24, 36, 0.82));
+            padding: 14px 18px;
             border-radius: 8px;
-            border: 1px solid rgba(80, 110, 150, 0.3);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.8), inset 0 0 12px rgba(0, 170, 255, 0.08);
-            min-width: 280px;
+            border: 1px solid rgba(80, 110, 150, 0.35);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.85), inset 0 0 12px rgba(0, 210, 255, 0.1);
+            min-width: 290px;
         }
         .character-title {
-            font-size: 13px;
+            font-size: 11px;
             letter-spacing: 2px;
             text-transform: uppercase;
             color: #7a8c9e;
             font-weight: 700;
         }
+        .character-name-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
         .character-name {
             font-size: 18px;
             font-weight: 900;
-            letter-spacing: 1.5px;
+            letter-spacing: 2px;
             color: #e6edf5;
-            text-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
-            margin-bottom: 4px;
+            text-shadow: 0 0 12px rgba(0, 210, 255, 0.6);
+        }
+        .overdrive-badge {
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: rgba(0, 210, 255, 0.2);
+            color: #00d2ff;
+            border: 1px solid rgba(0, 210, 255, 0.5);
+            display: none;
+            text-shadow: 0 0 8px #00d2ff;
         }
         .bar-container {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 3px;
         }
         .bar-label {
             font-size: 11px;
@@ -87,29 +102,29 @@
         }
         .health-bar-bg, .resonance-bar-bg {
             width: 100%;
-            height: 12px;
-            background: rgba(10, 12, 16, 0.9);
-            border-radius: 6px;
+            height: 10px;
+            background: rgba(8, 10, 14, 0.95);
+            border-radius: 5px;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
         }
         .health-bar-fill {
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, #b01a24, #e63946);
-            transition: width 0.15s ease-out;
-            box-shadow: 0 0 8px rgba(230, 57, 70, 0.6);
+            background: linear-gradient(90deg, #9b111e, #e63946);
+            transition: width 0.12s ease-out;
+            box-shadow: 0 0 8px rgba(230, 57, 70, 0.7);
         }
         .resonance-bar-fill {
-            width: 35%;
+            width: 0%;
             height: 100%;
-            background: linear-gradient(90deg, #1b4965, #00b4d8);
-            transition: width 0.1s ease-out;
-            box-shadow: 0 0 8px rgba(0, 180, 216, 0.6);
+            background: linear-gradient(90deg, #0f4c75, #00d2ff);
+            transition: width 0.08s ease-out;
+            box-shadow: 0 0 8px rgba(0, 210, 255, 0.7);
         }
         .banner-center {
             position: absolute;
-            top: 24px;
+            top: 18px;
             left: 50%;
             transform: translateX(-50%);
             text-align: center;
@@ -128,38 +143,122 @@
             text-transform: uppercase;
         }
         .instructions-card {
-            background: rgba(12, 14, 20, 0.85);
-            border: 1px solid rgba(80, 110, 150, 0.25);
-            padding: 14px 18px;
+            background: rgba(10, 12, 18, 0.88);
+            border: 1px solid rgba(80, 110, 150, 0.3);
+            padding: 12px 16px;
             border-radius: 8px;
-            font-size: 12px;
+            font-size: 11px;
             line-height: 1.6;
             color: #a4b3c2;
             max-width: 320px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.7);
         }
         .key-badge {
             display: inline-block;
-            background: #1e2533;
+            background: #182030;
             color: #00d2ff;
-            padding: 2px 6px;
+            padding: 1px 5px;
             border-radius: 4px;
             font-weight: 700;
-            border: 1px solid rgba(0, 210, 255, 0.3);
+            border: 1px solid rgba(0, 210, 255, 0.35);
             margin: 0 2px;
         }
         .combo-counter {
             position: absolute;
-            top: 140px;
-            left: 40px;
-            font-size: 32px;
+            top: 130px;
+            left: 30px;
+            font-size: 30px;
             font-weight: 900;
             color: #00d2ff;
             text-shadow: 0 0 16px rgba(0, 210, 255, 0.8);
             letter-spacing: 2px;
             opacity: 0;
             transform: scale(0.8);
-            transition: opacity 0.2s, transform 0.2s;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+        .parry-notification {
+            position: absolute;
+            top: 175px;
+            left: 30px;
+            font-size: 18px;
+            font-weight: 900;
+            color: #ffde59;
+            text-shadow: 0 0 14px rgba(255, 222, 89, 0.9);
+            letter-spacing: 2px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        /* BOSS HUD */
+        #boss-hud {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 580px;
+            max-width: 88vw;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: linear-gradient(180deg, rgba(16, 12, 22, 0.95), rgba(8, 6, 12, 0.98));
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(180, 80, 255, 0.4);
+            box-shadow: 0 0 30px rgba(120, 20, 200, 0.4);
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .boss-name-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .boss-name {
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #f1e4ff;
+            text-shadow: 0 0 10px rgba(190, 80, 255, 0.8);
+        }
+        .boss-phase-badge {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            padding: 1px 6px;
+            border-radius: 3px;
+            background: rgba(180, 50, 255, 0.3);
+            color: #e0aaff;
+            border: 1px solid rgba(180, 50, 255, 0.6);
+        }
+        .boss-bar-bg {
+            width: 100%;
+            height: 12px;
+            background: #08060c;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .boss-bar-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #5a189a, #9d4edd);
+            transition: width 0.15s ease-out;
+            box-shadow: 0 0 10px rgba(157, 78, 221, 0.8);
+        }
+        /* VICTORY BANNER */
+        #victory-banner {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: 6px;
+            color: #fceade;
+            text-shadow: 0 0 25px rgba(255, 200, 80, 0.9), 0 0 50px rgba(255, 120, 0, 0.6);
+            opacity: 0;
+            transition: opacity 0.6s, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            pointer-events: none;
+            text-align: center;
         }
         /* Mobile Touch Controls */
         #mobile-controls {
@@ -168,24 +267,24 @@
             justify-content: space-between;
             align-items: flex-end;
             pointer-events: auto;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
         .touch-dpad {
             display: flex;
-            gap: 16px;
+            gap: 12px;
         }
         .touch-actions {
             display: flex;
-            gap: 12px;
+            gap: 8px;
         }
         .touch-btn {
-            width: 64px;
-            height: 64px;
+            width: 58px;
+            height: 58px;
             border-radius: 50%;
-            background: rgba(20, 26, 38, 0.8);
+            background: rgba(18, 24, 36, 0.85);
             border: 2px solid rgba(0, 180, 255, 0.4);
             color: #ffffff;
-            font-size: 14px;
+            font-size: 11px;
             font-weight: 900;
             display: flex;
             justify-content: center;
@@ -194,16 +293,19 @@
             touch-action: manipulation;
         }
         .touch-btn:active {
-            background: rgba(0, 180, 255, 0.4);
+            background: rgba(0, 180, 255, 0.45);
             transform: scale(0.92);
         }
         .touch-btn.btn-attack {
-            width: 72px;
-            height: 72px;
-            background: rgba(180, 30, 40, 0.8);
-            border-color: rgba(255, 80, 80, 0.6);
+            width: 66px;
+            height: 66px;
+            background: rgba(180, 30, 40, 0.85);
+            border-color: rgba(255, 80, 80, 0.65);
         }
-        /* Floating damage numbers */
+        .touch-btn.btn-parry {
+            background: rgba(220, 160, 20, 0.85);
+            border-color: rgba(255, 210, 50, 0.7);
+        }
         .damage-number {
             position: absolute;
             color: #ff3344;
@@ -221,8 +323,12 @@
             font-size: 28px;
             text-shadow: 0 0 12px rgba(0, 229, 255, 0.9);
         }
+        .damage-number.riposte {
+            color: #ffd166;
+            font-size: 32px;
+            text-shadow: 0 0 14px rgba(255, 209, 102, 0.95);
+        }
     </style>
-    <!-- Three.js 3D Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
@@ -232,7 +338,10 @@
         <div class="hud-header">
             <div class="player-status">
                 <div class="character-title">Ashen Sentinel</div>
-                <div class="character-name">KAELEN</div>
+                <div class="character-name-row">
+                    <span class="character-name">KAELEN</span>
+                    <span id="overdrive-pill" class="overdrive-badge">OVERDRIVE (+30%)</span>
+                </div>
                 <div class="bar-container">
                     <div class="bar-label">
                         <span style="color:#ff6b6b;">HEALTH</span>
@@ -248,7 +357,7 @@
                         <span id="res-text">0 / 100</span>
                     </div>
                     <div class="resonance-bar-bg">
-                        <div id="res-bar" class="resonance-bar-fill" style="width: 0%;"></div>
+                        <div id="res-bar" class="resonance-bar-fill"></div>
                     </div>
                 </div>
             </div>
@@ -261,14 +370,32 @@
             <div class="instructions-card">
                 <div style="font-weight:700; color:#fff; margin-bottom:4px;">Controls:</div>
                 <div><span class="key-badge">A</span> / <span class="key-badge">D</span> Move Left / Right</div>
-                <div><span class="key-badge">SPACE</span> Jump (Hold for high jump)</div>
-                <div><span class="key-badge">LEFT CLICK</span> or <span class="key-badge">J</span> 3-Hit Sword Combo</div>
-                <div><span class="key-badge">RIGHT CLICK</span> or <span class="key-badge">U</span> Stygian Lance Spell</div>
-                <div><span class="key-badge">L-SHIFT</span> or <span class="key-badge">L</span> Shadow Dodge Roll</div>
+                <div><span class="key-badge">SPACE</span> Jump (Tap for low hop, hold for high)</div>
+                <div><span class="key-badge">L-CLICK</span> / <span class="key-badge">J</span> 3-Hit Combo</div>
+                <div><span class="key-badge">F</span> / <span class="key-badge">C</span> <strong>Parry / Deflect (2.5x Riposte!)</strong></div>
+                <div><span class="key-badge">R-CLICK</span> / <span class="key-badge">U</span> Stygian Lance (Piercing Railgun)</div>
+                <div><span class="key-badge">L-SHIFT</span> / <span class="key-badge">L</span> Shadow Dodge Roll (I-Frames)</div>
             </div>
         </div>
 
         <div id="combo-display" class="combo-counter">COMBO x1</div>
+        <div id="parry-display" class="parry-notification">PERFECT DEFLECTION! (RIPOSTE 2.5x)</div>
+
+        <!-- BOSS HEALTH BAR -->
+        <div id="boss-hud">
+            <div class="boss-name-row">
+                <span class="boss-name">VAEL-KRAG, THE WEEPING GATEKEEPER</span>
+                <span id="boss-phase-tag" class="boss-phase-badge">PHASE 1</span>
+            </div>
+            <div class="boss-bar-bg">
+                <div id="boss-hp-fill" class="boss-bar-fill"></div>
+            </div>
+        </div>
+
+        <div id="victory-banner">
+            <div>GATEKEEPER FELLED</div>
+            <div style="font-size:14px; letter-spacing:4px; color:#c4b5fd; margin-top:8px;">THE FIRST OATH IS BROKEN</div>
+        </div>
 
         <!-- Android / Mobile Touch Controls -->
         <div id="mobile-controls">
@@ -277,6 +404,7 @@
                 <button class="touch-btn" id="btn-right">▶</button>
             </div>
             <div class="touch-actions">
+                <button class="touch-btn btn-parry" id="btn-parry">PARRY</button>
                 <button class="touch-btn" id="btn-dodge">DODGE</button>
                 <button class="touch-btn" id="btn-spell">SPELL</button>
                 <button class="touch-btn" id="btn-jump">JUMP</button>
@@ -286,13 +414,12 @@
     </div>
 
     <script>
-        // Check for touch device
         if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
             document.getElementById('mobile-controls').style.display = 'flex';
         }
 
         // ==========================================
-        // PROCEDURAL AUDIO SYNTHESIZER (No files needed!)
+        // PROCEDURAL AUDIO SYNTHESIZER
         // ==========================================
         const AudioSys = {
             ctx: null,
@@ -306,21 +433,16 @@
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 const filter = this.ctx.createBiquadFilter();
-                
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(450 * pitch, this.ctx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.12);
-                
                 filter.type = 'lowpass';
                 filter.frequency.setValueAtTime(2000, this.ctx.currentTime);
-                
                 gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.14);
-                
                 osc.connect(filter);
                 filter.connect(gain);
                 gain.connect(this.ctx.destination);
-                
                 osc.start();
                 osc.stop(this.ctx.currentTime + 0.15);
             },
@@ -331,26 +453,44 @@
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(140, this.ctx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.18);
-                
                 gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.18);
-                
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
                 osc.start();
                 osc.stop(this.ctx.currentTime + 0.18);
+            },
+            playParry() {
+                this.init();
+                // Sharp high-metal clang
+                const osc1 = this.ctx.createOscillator();
+                const osc2 = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc1.type = 'sine';
+                osc2.type = 'square';
+                osc1.frequency.setValueAtTime(980, this.ctx.currentTime);
+                osc1.frequency.exponentialRampToValueAtTime(320, this.ctx.currentTime + 0.3);
+                osc2.frequency.setValueAtTime(1450, this.ctx.currentTime);
+                osc2.frequency.exponentialRampToValueAtTime(480, this.ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.65, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.35);
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc1.start();
+                osc2.start();
+                osc1.stop(this.ctx.currentTime + 0.35);
+                osc2.stop(this.ctx.currentTime + 0.35);
             },
             playSpell() {
                 this.init();
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(180, this.ctx.currentTime + 0.35);
-                
-                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                osc.frequency.setValueAtTime(650, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(160, this.ctx.currentTime + 0.35);
+                gain.gain.setValueAtTime(0.45, this.ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
-                
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
                 osc.start();
@@ -362,11 +502,23 @@
                 const gain = this.ctx.createGain();
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(280, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(560, this.ctx.currentTime + 0.4);
-                
-                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.4);
+                gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
-                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.45);
+            },
+            playBossSlam() {
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(80, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(20, this.ctx.currentTime + 0.45);
+                gain.gain.setValueAtTime(0.6, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.45);
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
                 osc.start();
@@ -375,15 +527,15 @@
         };
 
         // ==========================================
-        // THREE.JS 2.5D GAME ENGINE SETUP
+        // THREE.JS SCENE & ATMOSPHERE
         // ==========================================
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x06080e, 0.022);
+        scene.fog = new THREE.FogExp2(0x05070d, 0.02);
 
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 120);
         camera.position.set(0, 2.5, 12);
-        camera.rotation.x = 0.08; // 5 degree downward tilt
+        camera.rotation.x = 0.08;
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -391,116 +543,84 @@
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.1;
+        renderer.toneMappingExposure = 1.15;
         container.appendChild(renderer.domElement);
 
-        // ==========================================
-        // ATMOSPHERIC LIGHTING
-        // ==========================================
-        const ambientLight = new THREE.AmbientLight(0x222a38, 0.8);
+        const ambientLight = new THREE.AmbientLight(0x242c3c, 0.85);
         scene.add(ambientLight);
 
-        // Main moonlight / eclipse directional light
-        const moonLight = new THREE.DirectionalLight(0x7090c0, 1.2);
-        moonLight.position.set(5, 15, 8);
+        const moonLight = new THREE.DirectionalLight(0x7c9cd2, 1.3);
+        moonLight.position.set(10, 18, 10);
         moonLight.castShadow = true;
         moonLight.shadow.mapSize.width = 1024;
         moonLight.shadow.mapSize.height = 1024;
-        moonLight.shadow.camera.near = 0.5;
-        moonLight.shadow.camera.far = 40;
-        moonLight.shadow.camera.left = -20;
-        moonLight.shadow.camera.right = 20;
-        moonLight.shadow.camera.top = 10;
-        moonLight.shadow.camera.bottom = -10;
         scene.add(moonLight);
 
-        // Warm rim light for separation
         const rimLight = new THREE.DirectionalLight(0xff6633, 0.5);
-        rimLight.position.set(-8, 5, -5);
+        rimLight.position.set(-10, 6, -6);
         scene.add(rimLight);
 
-        // ==========================================
-        // ENVIRONMENT BUILDING (Morbryn Courtyard)
-        // ==========================================
-        // Ground Pavement (Locked Z=0)
-        const groundGeo = new THREE.BoxGeometry(70, 1.5, 5);
-        const stoneMat = new THREE.MeshStandardMaterial({
-            color: 0x181c24,
-            roughness: 0.85,
-            metalness: 0.2
-        });
+        // Ground Pavement (Z=0 plane)
+        const groundGeo = new THREE.BoxGeometry(90, 1.5, 6);
+        const stoneMat = new THREE.MeshStandardMaterial({ color: 0x181c24, roughness: 0.85, metalness: 0.2 });
         const ground = new THREE.Mesh(groundGeo, stoneMat);
-        ground.position.set(0, -0.75, 0);
+        ground.position.set(5, -0.75, 0);
         ground.receiveShadow = true;
         scene.add(ground);
 
         // Elevated Platforms
         function createPlatform(x, y, width) {
-            const platGeo = new THREE.BoxGeometry(width, 0.6, 3.5);
+            const platGeo = new THREE.BoxGeometry(width, 0.6, 4);
             const plat = new THREE.Mesh(platGeo, stoneMat);
             plat.position.set(x, y, 0);
             plat.receiveShadow = true;
             plat.castShadow = true;
             scene.add(plat);
-            return { x, y, width, mesh: plat };
+            return { x, y, width };
         }
         const platforms = [
             createPlatform(-8, 3.2, 6),
             createPlatform(8, 3.6, 7),
-            createPlatform(18, 5.0, 5)
+            createPlatform(18, 4.8, 6)
         ];
 
-        // Background Gothic Architecture
-        const pillarMat = new THREE.MeshStandardMaterial({ color: 0x12151d, roughness: 0.9 });
-        for (let x = -30; x <= 30; x += 6) {
-            const pillarGeo = new THREE.CylinderGeometry(0.5, 0.6, 16, 8);
+        // Background Gothic Pillars
+        const pillarMat = new THREE.MeshStandardMaterial({ color: 0x11141b, roughness: 0.9 });
+        for (let x = -36; x <= 42; x += 6) {
+            const pillarGeo = new THREE.CylinderGeometry(0.5, 0.6, 18, 8);
             const pillar = new THREE.Mesh(pillarGeo, pillarMat);
-            pillar.position.set(x, 6, -3);
-            pillar.receiveShadow = true;
+            pillar.position.set(x, 7, -3.5);
             scene.add(pillar);
-
-            // Cross arches
-            const archGeo = new THREE.BoxGeometry(6.2, 0.8, 1);
-            const arch = new THREE.Mesh(archGeo, pillarMat);
-            arch.position.set(x + 3, 12, -3);
-            scene.add(arch);
         }
 
-        // Bleeding Eclipse in Background
-        const moonGeo = new THREE.SphereGeometry(4, 32, 32);
-        const moonMat = new THREE.MeshBasicMaterial({ color: 0x0a0c14 });
+        // Bleeding Eclipse Moon
+        const moonGeo = new THREE.SphereGeometry(4.5, 32, 32);
+        const moonMat = new THREE.MeshBasicMaterial({ color: 0x07090f });
         const eclipseMoon = new THREE.Mesh(moonGeo, moonMat);
-        eclipseMoon.position.set(10, 16, -25);
+        eclipseMoon.position.set(14, 18, -28);
         scene.add(eclipseMoon);
 
-        const coronaGeo = new THREE.RingGeometry(4.05, 5.2, 32);
+        const coronaGeo = new THREE.RingGeometry(4.55, 6.0, 32);
         const coronaMat = new THREE.MeshBasicMaterial({ color: 0x7b2cbf, side: THREE.DoubleSide });
         const corona = new THREE.Mesh(coronaGeo, coronaMat);
-        corona.position.set(10, 16, -24.8);
+        corona.position.set(14, 18, -27.8);
         scene.add(corona);
 
-        // Ambient Embers / Rain Particles
-        const emberCount = 180;
+        // Ambient Embers
+        const emberCount = 200;
         const emberGeo = new THREE.BufferGeometry();
         const emberPos = new Float32Array(emberCount * 3);
         for (let i = 0; i < emberCount * 3; i += 3) {
-            emberPos[i] = (Math.random() - 0.5) * 50;
-            emberPos[i + 1] = Math.random() * 15;
-            emberPos[i + 2] = (Math.random() - 0.5) * 10;
+            emberPos[i] = (Math.random() - 0.5) * 60;
+            emberPos[i + 1] = Math.random() * 16;
+            emberPos[i + 2] = (Math.random() - 0.5) * 12;
         }
         emberGeo.setAttribute('position', new THREE.BufferAttribute(emberPos, 3));
-        const emberMat = new THREE.PointsMaterial({
-            color: 0x64b5f6,
-            size: 0.12,
-            transparent: true,
-            opacity: 0.7
-        });
+        const emberMat = new THREE.PointsMaterial({ color: 0x64b5f6, size: 0.12, transparent: true, opacity: 0.7 });
         const embers = new THREE.Points(emberGeo, emberMat);
         scene.add(embers);
 
-        // ==========================================
-        // CHECKPOINT REST SHRINE
-        // ==========================================
+        // Sanctuary Checkpoint Shrine
         const shrineGroup = new THREE.Group();
         const obeliskGeo = new THREE.CylinderGeometry(0.3, 0.6, 3, 4);
         const obeliskMat = new THREE.MeshStandardMaterial({ color: 0x222630, metalness: 0.5, roughness: 0.4 });
@@ -511,110 +631,159 @@
         const shrineLight = new THREE.PointLight(0x00d2ff, 1.8, 6);
         shrineLight.position.set(0, 2.5, 0);
         shrineGroup.add(shrineLight);
-
         shrineGroup.position.set(-14, 0, 0);
         scene.add(shrineGroup);
 
         // ==========================================
-        // THE MAIN KNIGHT (KAELEN)
+        // THE KNIGHT (KAELEN)
         // ==========================================
         const knightGroup = new THREE.Group();
+        const armorMat = new THREE.MeshStandardMaterial({ color: 0x151820, metalness: 0.85, roughness: 0.3 });
 
-        // Dark Armor Material
-        const armorMat = new THREE.MeshStandardMaterial({
-            color: 0x151820,
-            metalness: 0.85,
-            roughness: 0.3
-        });
-
-        // Body Torso
-        const torsoGeo = new THREE.CylinderGeometry(0.35, 0.28, 0.9, 8);
-        const torso = new THREE.Mesh(torsoGeo, armorMat);
+        const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.28, 0.9, 8), armorMat);
         torso.position.y = 1.1;
         torso.castShadow = true;
         knightGroup.add(torso);
 
-        // Helmet
-        const headGeo = new THREE.SphereGeometry(0.26, 12, 12);
-        const head = new THREE.Mesh(headGeo, armorMat);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 12), armorMat);
         head.position.y = 1.72;
         head.castShadow = true;
         knightGroup.add(head);
 
         // Glowing Blue Starlight Visor Slit
-        const visorGeo = new THREE.BoxGeometry(0.18, 0.04, 0.2);
-        const visorMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff });
-        const visor = new THREE.Mesh(visorGeo, visorMat);
+        const visor = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.2), new THREE.MeshBasicMaterial({ color: 0x00d2ff }));
         visor.position.set(0.16, 1.72, 0);
         knightGroup.add(visor);
 
-        // Trailing Slate Cloak
-        const cloakGeo = new THREE.BoxGeometry(0.1, 1.1, 0.5);
+        // Billowing Cloak
         const cloakMat = new THREE.MeshStandardMaterial({ color: 0x2b3342, roughness: 0.9 });
-        const cloak = new THREE.Mesh(cloakGeo, cloakMat);
+        const cloak = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.1, 0.5), cloakMat);
         cloak.position.set(-0.25, 0.9, 0);
         cloak.rotation.z = 0.15;
         knightGroup.add(cloak);
 
-        // Arms & Weapon Pivot
+        // Sword & Pivot
         const swordPivot = new THREE.Group();
         swordPivot.position.set(0.2, 1.1, 0);
         knightGroup.add(swordPivot);
 
-        // Ashen Longsword ("Penumbra")
-        const bladeGeo = new THREE.BoxGeometry(0.08, 1.2, 0.12);
-        const bladeMat = new THREE.MeshStandardMaterial({
-            color: 0xdde5ed,
-            metalness: 0.95,
-            roughness: 0.15,
-            emissive: 0x004488,
-            emissiveIntensity: 0.3
-        });
-        const blade = new THREE.Mesh(bladeGeo, bladeMat);
+        const blade = new THREE.Mesh(
+            new THREE.BoxGeometry(0.08, 1.2, 0.12),
+            new THREE.MeshStandardMaterial({ color: 0xdde5ed, metalness: 0.95, roughness: 0.15, emissive: 0x004488, emissiveIntensity: 0.3 })
+        );
         blade.position.set(0.5, 0.3, 0);
         blade.rotation.z = -Math.PI / 4;
         blade.castShadow = true;
         swordPivot.add(blade);
 
-        // Knight dynamic light
+        // Parry Shield Effect Mesh (Cyan Runic Barrier)
+        const parryShieldGeo = new THREE.RingGeometry(0.2, 0.75, 16);
+        const parryShieldMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0 });
+        const parryShield = new THREE.Mesh(parryShieldGeo, parryShieldMat);
+        parryShield.rotation.y = Math.PI / 2;
+        parryShield.position.set(0.4, 1.1, 0);
+        knightGroup.add(parryShield);
+
         const knightLight = new THREE.PointLight(0x00b4d8, 1.0, 4);
         knightLight.position.set(0, 1.5, 0.5);
         knightGroup.add(knightLight);
-
-        knightGroup.position.set(0, 0, 0);
         scene.add(knightGroup);
 
         // ==========================================
-        // TRAINING DUMMY ENEMY
+        // ASHEN FOOTMAN ENEMY
         // ==========================================
-        const dummyGroup = new THREE.Group();
-        const dummyGeo = new THREE.CylinderGeometry(0.4, 0.45, 1.8, 12);
-        const dummyMat = new THREE.MeshStandardMaterial({
-            color: 0x5a6375,
-            metalness: 0.4,
-            roughness: 0.6
-        });
-        const dummyMesh = new THREE.Mesh(dummyGeo, dummyMat);
-        dummyMesh.position.y = 0.9;
-        dummyMesh.castShadow = true;
-        dummyGroup.add(dummyMesh);
+        const footmanGroup = new THREE.Group();
+        const footmanArmorMat = new THREE.MeshStandardMaterial({ color: 0x2e3540, metalness: 0.6, roughness: 0.5 });
+        const footmanTorso = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.25, 0.85, 8), footmanArmorMat);
+        footmanTorso.position.y = 1.0;
+        footmanGroup.add(footmanTorso);
 
-        // Shield plate
-        const shieldGeo = new THREE.BoxGeometry(0.12, 1.0, 0.7);
-        const shieldMat = new THREE.MeshStandardMaterial({ color: 0x3a4150, metalness: 0.7 });
-        const shield = new THREE.Mesh(shieldGeo, shieldMat);
-        shield.position.set(-0.35, 1.0, 0);
-        dummyGroup.add(shield);
+        const footmanHead = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), footmanArmorMat);
+        footmanHead.position.y = 1.6;
+        footmanGroup.add(footmanHead);
 
-        dummyGroup.position.set(6, 0, 0);
-        scene.add(dummyGroup);
+        // White sword glint telegraph mesh
+        const glintGeo = new THREE.SphereGeometry(0.2, 8, 8);
+        const glintMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
+        const footmanGlint = new THREE.Mesh(glintGeo, glintMat);
+        footmanGlint.position.set(-0.4, 1.2, 0);
+        footmanGroup.add(footmanGlint);
 
-        let dummyHP = 100;
-        let dummyMaxHP = 100;
-        let dummyFlashTimer = 0;
+        const footmanSword = new THREE.Mesh(
+            new THREE.BoxGeometry(0.06, 1.0, 0.1),
+            new THREE.MeshStandardMaterial({ color: 0x8a929e, roughness: 0.4 })
+        );
+        footmanSword.position.set(-0.4, 0.8, 0);
+        footmanSword.rotation.z = Math.PI / 4;
+        footmanGroup.add(footmanSword);
+
+        footmanGroup.position.set(8, 0, 0);
+        scene.add(footmanGroup);
+
+        let footman = {
+            x: 8,
+            hp: 80,
+            maxHp: 80,
+            state: 'PATROL',
+            facing: -1,
+            timer: 0,
+            cooldown: 0,
+            isStaggered: false
+        };
 
         // ==========================================
-        // GAME STATE & COMBAT VARIABLES
+        // BOSS: VAEL-KRAG, THE WEEPING GATEKEEPER
+        // ==========================================
+        const bossGroup = new THREE.Group();
+        const bossMat = new THREE.MeshStandardMaterial({ color: 0x1f1a26, metalness: 0.85, roughness: 0.35 });
+
+        // Giant Titan Torso
+        const bossTorso = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.6, 2.2, 8), bossMat);
+        bossTorso.position.y = 2.0;
+        bossTorso.castShadow = true;
+        bossGroup.add(bossTorso);
+
+        // Horned Crest Helm
+        const bossHead = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.8, 0.7), bossMat);
+        bossHead.position.y = 3.4;
+        bossGroup.add(bossHead);
+
+        // Giant Bell Club
+        const bellGroup = new THREE.Group();
+        bellGroup.position.set(-1.0, 2.2, 0);
+        bossGroup.add(bellGroup);
+
+        const bellGeo = new THREE.CylinderGeometry(0.7, 1.1, 1.8, 12);
+        const bellMat = new THREE.MeshStandardMaterial({ color: 0x3a3044, metalness: 0.8, roughness: 0.4 });
+        const bellMesh = new THREE.Mesh(bellGeo, bellMat);
+        bellMesh.position.set(0, -0.6, 0);
+        bellGroup.add(bellMesh);
+
+        const bellLight = new THREE.PointLight(0x7b2cbf, 0, 8);
+        bellLight.position.set(0, -0.6, 0.5);
+        bellGroup.add(bellLight);
+
+        bossGroup.position.set(24, 0, 0);
+        scene.add(bossGroup);
+
+        let boss = {
+            x: 24,
+            hp: 400,
+            maxHp: 400,
+            phase: 1,
+            state: 'IDLE',
+            timer: 0,
+            cooldown: 1.0,
+            activeHitbox: null,
+            shockwaves: [],
+            isDefeated: false
+        };
+
+        // Active Shockwave Visual Meshes
+        const shockwaveMeshes = [];
+
+        // ==========================================
+        // PLAYER STATE & MATHEMATICAL CONSTANTS
         // ==========================================
         const Player = {
             x: 0,
@@ -627,55 +796,58 @@
             maxHp: 100,
             resonance: 0,
             maxResonance: 100,
+            isOverdrive: false,
             
-            // Movement parameters
             speed: 9.0,
             jumpPower: 14.5,
             gravity: -36.0,
             coyoteTime: 0.12,
             coyoteTimer: 0,
             
-            // Combat parameters
             isAttacking: false,
             comboStep: 0,
             lastAttackTime: 0,
-            comboResetTime: 0.7,
+            comboResetTime: 0.65,
             attackTimer: 0,
+            
             isDodging: false,
-            dodgeTimer: 0
+            dodgeTimer: 0,
+            
+            // Parry System
+            isParrying: false,
+            parryTimer: 0,
+            parryCooldown: 0,
+            riposteMultiplier: 1.0
         };
 
         let screenShake = 0;
         let hitStopTimer = 0;
 
-        // Floating Damage Numbers
-        function spawnDamageNumber(amount, isCrit = false) {
+        function spawnDamageNumber(amount, type = 'normal', posX = 0) {
             const el = document.createElement('div');
-            el.className = 'damage-number' + (isCrit ? ' crit' : '');
+            el.className = 'damage-number' + (type === 'crit' ? ' crit' : (type === 'riposte' ? ' riposte' : ''));
             el.innerText = Math.round(amount);
-            
-            // Project dummy 3D position to 2D screen
-            const tempV = new THREE.Vector3(dummyGroup.position.x, dummyGroup.position.y + 2.0, dummyGroup.position.z);
+
+            const tempV = new THREE.Vector3(posX, 2.0, 0);
             tempV.project(camera);
-            const x = (tempV.x * 0.5 + 0.5) * window.innerWidth + (Math.random() - 0.5) * 40;
+            const x = (tempV.x * 0.5 + 0.5) * window.innerWidth + (Math.random() - 0.5) * 30;
             const y = (-(tempV.y * 0.5) + 0.5) * window.innerHeight;
-            
+
             el.style.left = `${x}px`;
             el.style.top = `${y}px`;
             document.body.appendChild(el);
-            
+
             setTimeout(() => {
-                el.style.transform = 'translateY(-50px) scale(1.3)';
+                el.style.transform = 'translateY(-55px) scale(1.3)';
                 el.style.opacity = '0';
             }, 30);
-            
             setTimeout(() => el.remove(), 750);
         }
 
         // ==========================================
-        // INPUT HANDLING
+        // INPUT BINDINGS
         // ==========================================
-        const Keys = { left: false, right: false, jump: false, attack: false, spell: false, dodge: false };
+        const Keys = { left: false, right: false, jump: false };
 
         window.addEventListener('keydown', (e) => {
             AudioSys.init();
@@ -686,6 +858,7 @@
                 Keys.jump = true;
             }
             if (e.code === 'KeyJ' || e.code === 'KeyZ') doAttack();
+            if (e.code === 'KeyF' || e.code === 'KeyC') doParry();
             if (e.code === 'KeyU' || e.code === 'KeyX') doSpell();
             if (e.code === 'ShiftLeft' || e.code === 'KeyL') doDodge();
         });
@@ -703,7 +876,6 @@
         });
         window.addEventListener('contextmenu', e => e.preventDefault());
 
-        // Mobile Button Listeners
         const setupTouch = (id, onDown, onUp) => {
             const btn = document.getElementById(id);
             btn.addEventListener('touchstart', (e) => { e.preventDefault(); AudioSys.init(); onDown(); });
@@ -713,11 +885,12 @@
         setupTouch('btn-right', () => Keys.right = true, () => Keys.right = false);
         setupTouch('btn-jump', () => doJump());
         setupTouch('btn-attack', () => doAttack());
+        setupTouch('btn-parry', () => doParry());
         setupTouch('btn-spell', () => doSpell());
         setupTouch('btn-dodge', () => doDodge());
 
         // ==========================================
-        // COMBAT & ACTIONS EXECUTION
+        // COMBAT SYSTEM (PARRY, ATTACK, SPELL)
         // ==========================================
         function doJump() {
             if (Player.coyoteTimer > 0) {
@@ -735,6 +908,42 @@
             AudioSys.playSlash(1.6);
         }
 
+        // 6-Frame Parry Deflection System
+        function doParry() {
+            if (Player.parryCooldown > 0 || Player.isParrying) return;
+
+            Player.isParrying = true;
+            Player.parryTimer = 0.10; // Exact 6-frame window at 60Hz
+            Player.parryCooldown = 0.20; // 0.20s anti-spam recovery
+
+            parryShieldMat.opacity = 0.85;
+
+            // Check if footman is in active attack frame
+            const dist = Math.abs(Player.x - footman.x);
+            const inFront = Player.facingRight ? (footman.x > Player.x) : (footman.x < Player.x);
+
+            if (dist < 2.5 && inFront && footman.state === 'ATTACK_ACTIVE') {
+                // Successful parry!
+                AudioSys.playParry();
+                footman.state = 'STAGGER';
+                footman.timer = 1.8; // Staggered for 1.8s
+                footman.isStaggered = true;
+
+                // Award Resonance & Riposte
+                Player.resonance = 100;
+                Player.isOverdrive = true;
+                Player.riposteMultiplier = 2.5;
+                updateHUD();
+
+                hitStopTimer = 0.08;
+                screenShake = 0.3;
+
+                const parryEl = document.getElementById('parry-display');
+                parryEl.style.opacity = '1';
+                setTimeout(() => parryEl.style.opacity = '0', 1200);
+            }
+        }
+
         function doAttack() {
             if (Player.isAttacking && Player.attackTimer > 0.08) return;
 
@@ -748,7 +957,6 @@
             Player.isAttacking = true;
             Player.attackTimer = 0.22;
 
-            // Audio & Combo UI
             AudioSys.playSlash(Player.comboStep === 3 ? 0.75 : 1.0 + Player.comboStep * 0.15);
             const comboEl = document.getElementById('combo-display');
             comboEl.innerText = `COMBO x${Player.comboStep}`;
@@ -756,90 +964,129 @@
             comboEl.style.transform = 'scale(1.2)';
             setTimeout(() => comboEl.style.transform = 'scale(1)', 150);
 
-            // Hit Detection (Range Check along 2.5D X plane)
-            const dist = Math.abs(Player.x - dummyGroup.position.x);
-            const inFront = Player.facingRight 
-                ? (dummyGroup.position.x > Player.x) 
-                : (dummyGroup.position.x < Player.x);
+            let baseDamages = [22, 28, 48];
+            let dmg = baseDamages[Player.comboStep - 1];
 
-            if (dist < 2.4 && inFront) {
-                const damages = [22, 28, 48];
-                const dmg = damages[Player.comboStep - 1];
-                const isCrit = Player.comboStep === 3;
+            // Apply Overdrive (+30%) & Riposte (2.5x)
+            let isRiposte = false;
+            if (Player.riposteMultiplier > 1.0) {
+                dmg *= Player.riposteMultiplier;
+                Player.riposteMultiplier = 1.0;
+                isRiposte = true;
+            }
+            if (Player.isOverdrive) {
+                dmg *= 1.3;
+            }
 
-                dummyHP = Math.max(0, dummyHP - dmg);
-                dummyFlashTimer = 0.15;
-                dummyMat.color.setHex(0xff2233);
-                
-                // Knockback
-                dummyGroup.position.x += (Player.facingRight ? 0.35 : -0.35);
+            // Hit Ashen Footman
+            const distFootman = Math.abs(Player.x - footman.x);
+            const inFrontFootman = Player.facingRight ? (footman.x > Player.x) : (footman.x < Player.x);
+            if (distFootman < 2.5 && inFrontFootman && footman.hp > 0) {
+                footman.hp = Math.max(0, footman.hp - dmg);
+                footmanGroup.position.x += (Player.facingRight ? 0.4 : -0.4);
+                footman.x = footmanGroup.position.x;
+                AudioSys.playHit();
+                hitStopTimer = isRiposte ? 0.08 : (Player.comboStep === 3 ? 0.06 : 0.03);
+                screenShake = isRiposte ? 0.35 : 0.15;
+                spawnDamageNumber(dmg, isRiposte ? 'riposte' : (Player.comboStep === 3 ? 'crit' : 'normal'), footman.x);
 
-                // Build Stygian Resonance
                 Player.resonance = Math.min(Player.maxResonance, Player.resonance + 15);
+                if (Player.resonance >= 100) Player.isOverdrive = true;
                 updateHUD();
 
-                spawnDamageNumber(dmg, isCrit);
+                if (footman.hp <= 0) {
+                    footman.state = 'DEFEATED';
+                    footmanGroup.position.y = -2; // drop off
+                }
+            }
+
+            // Hit Boss Vael-Krag
+            const distBoss = Math.abs(Player.x - boss.x);
+            const inFrontBoss = Player.facingRight ? (boss.x > Player.x) : (boss.x < Player.x);
+            if (distBoss < 4.0 && inFrontBoss && boss.hp > 0) {
+                boss.hp = Math.max(0, boss.hp - dmg);
                 AudioSys.playHit();
+                hitStopTimer = Player.comboStep === 3 ? 0.07 : 0.04;
+                screenShake = 0.25;
+                spawnDamageNumber(dmg, Player.comboStep === 3 ? 'crit' : 'normal', boss.x);
 
-                // Hit Stop & Screen Shake
-                hitStopTimer = isCrit ? 0.08 : 0.04;
-                screenShake = isCrit ? 0.35 : 0.15;
+                if (boss.hp <= 200 && boss.phase === 1) {
+                    boss.phase = 2;
+                    bellLight.intensity = 3.5;
+                    bellMat.color.setHex(0x7b2cbf);
+                    document.getElementById('boss-phase-tag').innerText = 'PHASE 2 (VIOLET FLAME)';
+                    document.getElementById('boss-phase-tag').style.background = 'rgba(255, 50, 100, 0.4)';
+                }
+                updateHUD();
 
-                if (dummyHP <= 0) {
-                    setTimeout(() => {
-                        dummyHP = dummyMaxHP;
-                        dummyMat.color.setHex(0x5a6375);
-                    }, 2000);
+                if (boss.hp <= 0) {
+                    boss.isDefeated = true;
+                    document.getElementById('victory-banner').style.opacity = '1';
+                    document.getElementById('victory-banner').style.transform = 'translate(-50%, -50%) scale(1)';
+                    document.getElementById('boss-hud').style.opacity = '0';
                 }
             }
         }
 
-        // Stygian Lance Spell (Ranged Railgun Beam)
+        // Stygian Lance (16m Piercing Beam)
         function doSpell() {
-            if (Player.resonance < 25) {
-                // Not enough resonance
-                return;
-            }
+            if (Player.resonance < 25) return;
             Player.resonance -= 25;
+            if (Player.resonance < 100) Player.isOverdrive = false;
             updateHUD();
-            AudioSys.playSpell();
-            screenShake = 0.2;
 
-            // Spawn visual beam
-            const beamGeo = new THREE.CylinderGeometry(0.12, 0.12, 16, 8);
+            AudioSys.playSpell();
+            screenShake = 0.25;
+
+            const beamGeo = new THREE.CylinderGeometry(0.14, 0.14, 18, 8);
             const beamMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff });
             const beam = new THREE.Mesh(beamGeo, beamMat);
             beam.rotation.z = Math.PI / 2;
-            beam.position.set(Player.x + (Player.facingRight ? 8 : -8), Player.y + 1.2, 0);
+            beam.position.set(Player.x + (Player.facingRight ? 9 : -9), Player.y + 1.2, 0);
             scene.add(beam);
 
-            // Damage enemy if in line
-            const dist = Math.abs(Player.x - dummyGroup.position.x);
-            const inFront = Player.facingRight 
-                ? (dummyGroup.position.x > Player.x) 
-                : (dummyGroup.position.x < Player.x);
-
-            if (inFront && dist < 16) {
-                dummyHP = Math.max(0, dummyHP - 55);
-                dummyFlashTimer = 0.2;
-                dummyMat.color.setHex(0x00d2ff);
-                spawnDamageNumber(55, true);
-                AudioSys.playHit();
+            // Pierce Footman
+            const distF = Math.abs(Player.x - footman.x);
+            if (distF < 16 && (Player.facingRight ? footman.x > Player.x : footman.x < Player.x) && footman.hp > 0) {
+                footman.hp = Math.max(0, footman.hp - 55);
+                spawnDamageNumber(55, 'crit', footman.x);
+                if (footman.hp <= 0) footmanGroup.position.y = -2;
             }
 
-            setTimeout(() => scene.remove(beam), 120);
+            // Pierce Boss
+            const distB = Math.abs(Player.x - boss.x);
+            if (distB < 16 && (Player.facingRight ? boss.x > Player.x : boss.x < Player.x) && boss.hp > 0) {
+                boss.hp = Math.max(0, boss.hp - 55);
+                spawnDamageNumber(55, 'crit', boss.x);
+                if (boss.hp <= 200 && boss.phase === 1) {
+                    boss.phase = 2;
+                    bellLight.intensity = 3.5;
+                    bellMat.color.setHex(0x7b2cbf);
+                    document.getElementById('boss-phase-tag').innerText = 'PHASE 2 (VIOLET FLAME)';
+                }
+                if (boss.hp <= 0) {
+                    boss.isDefeated = true;
+                    document.getElementById('victory-banner').style.opacity = '1';
+                }
+                updateHUD();
+            }
+
+            setTimeout(() => scene.remove(beam), 140);
         }
 
         function updateHUD() {
             document.getElementById('hp-bar').style.width = `${(Player.hp / Player.maxHp) * 100}%`;
             document.getElementById('hp-text').innerText = `${Math.round(Player.hp)} / ${Player.maxHp}`;
-            
             document.getElementById('res-bar').style.width = `${(Player.resonance / Player.maxResonance) * 100}%`;
             document.getElementById('res-text').innerText = `${Math.round(Player.resonance)} / ${Player.maxResonance}`;
+            document.getElementById('overdrive-pill').style.display = Player.isOverdrive ? 'inline-block' : 'none';
+
+            // Boss bar
+            document.getElementById('boss-hp-fill').style.width = `${(boss.hp / boss.maxHp) * 100}%`;
         }
 
         // ==========================================
-        // MAIN GAMEPLAY LOOP (60 FPS)
+        // 60FPS GAME LOOP
         // ==========================================
         let lastTime = performance.now();
 
@@ -851,38 +1098,32 @@
             lastTime = now;
             dt = Math.min(dt, 0.05);
 
-            // Hit-Stop Micro Freeze
             if (hitStopTimer > 0) {
                 hitStopTimer -= dt;
                 return;
             }
 
-            // 1. Horizontal Movement
+            // 1. Player Kinematics
             if (!Player.isDodging) {
                 let moveDir = 0;
                 if (Keys.left) moveDir -= 1;
                 if (Keys.right) moveDir += 1;
-
                 Player.vx = moveDir * Player.speed;
-
                 if (moveDir > 0) Player.facingRight = true;
                 if (moveDir < 0) Player.facingRight = false;
             } else {
                 Player.dodgeTimer -= dt;
                 if (Player.dodgeTimer <= 0) Player.isDodging = false;
             }
-
             Player.x += Player.vx * dt;
 
-            // 2. Vertical Jump & Gravity
+            // Jump & Gravity
             Player.vy += Player.gravity * dt;
             Player.y += Player.vy * dt;
 
-            // 3. Collision with Ground & Platforms
+            // Ground & Platform collisions
             let groundLevel = 0;
             Player.isGrounded = false;
-
-            // Check platforms
             for (const p of platforms) {
                 if (Player.x > p.x - p.width / 2 && Player.x < p.x + p.width / 2) {
                     if (Player.y >= p.y && Player.y + Player.vy * dt <= p.y) {
@@ -890,7 +1131,6 @@
                     }
                 }
             }
-
             if (Player.y <= groundLevel) {
                 Player.y = groundLevel;
                 Player.vy = 0;
@@ -900,13 +1140,23 @@
                 Player.coyoteTimer -= dt;
             }
 
-            // 4. Update Attack & Visual Sword Arc
+            // Parry Timer & Visual Shield Fade
+            if (Player.parryTimer > 0) {
+                Player.parryTimer -= dt;
+                if (Player.parryTimer <= 0) {
+                    Player.isParrying = false;
+                    parryShieldMat.opacity = 0;
+                }
+            }
+            if (Player.parryCooldown > 0) {
+                Player.parryCooldown -= dt;
+            }
+
+            // Attack Swings
             if (Player.isAttacking) {
                 Player.attackTimer -= dt;
                 const swingPhase = (0.22 - Player.attackTimer) / 0.22;
-                const swingAngle = (Player.comboStep === 3 ? -2.2 : -1.4) * Math.sin(swingPhase * Math.PI);
-                swordPivot.rotation.z = swingAngle;
-                
+                swordPivot.rotation.z = (Player.comboStep === 3 ? -2.2 : -1.4) * Math.sin(swingPhase * Math.PI);
                 if (Player.attackTimer <= 0) {
                     Player.isAttacking = false;
                     swordPivot.rotation.z = 0;
@@ -915,20 +1165,13 @@
                 swordPivot.rotation.z = 0;
             }
 
-            // Combo counter fadeout
-            if (now / 1000 - Player.lastAttackTime > Player.comboResetTime + 0.3) {
-                document.getElementById('combo-display').style.opacity = '0';
-            }
-
-            // 5. Update Knight 3D Mesh Position & Orientation
+            // Knight Mesh Sync
             knightGroup.position.set(Player.x, Player.y, 0);
             knightGroup.rotation.y = Player.facingRight ? Math.PI / 2 : -Math.PI / 2;
-
-            // Dynamic Cloak physics tilt
             cloak.rotation.z = 0.15 + (Math.abs(Player.vx) / Player.speed) * 0.45;
 
-            // 6. Checkpoint Proximity Check (Rest & Full Heal)
-            if (Math.abs(Player.x - shrineGroup.position.x) < 1.8 && Player.hp < Player.maxHp) {
+            // Shrine Heal
+            if (Math.abs(Player.x - shrineGroup.position.x) < 2.0 && Player.hp < Player.maxHp) {
                 Player.hp = Player.maxHp;
                 updateHUD();
                 AudioSys.playHeal();
@@ -936,33 +1179,157 @@
                 setTimeout(() => shrineLight.intensity = 1.8, 600);
             }
 
-            // 7. Enemy Damage Flash Decay
-            if (dummyFlashTimer > 0) {
-                dummyFlashTimer -= dt;
-                if (dummyFlashTimer <= 0) {
-                    dummyMat.color.setHex(0x5a6375);
+            // 2. Ashen Footman AI Loop
+            if (footman.hp > 0) {
+                const distF = Math.abs(footman.x - Player.x);
+                footman.facing = Player.x > footman.x ? 1 : -1;
+                footmanGroup.rotation.y = footman.facing > 0 ? Math.PI / 2 : -Math.PI / 2;
+
+                if (footman.state === 'PATROL') {
+                    if (distF <= 8.0) footman.state = 'AGGRO';
+                } else if (footman.state === 'AGGRO') {
+                    if (distF <= 2.2 && footman.cooldown <= 0) {
+                        footman.state = 'ATTACK_WINDUP';
+                        footman.timer = 0.35; // 0.35s windup telegraph
+                        footmanGlint.material.opacity = 0.9;
+                    } else {
+                        footman.x += footman.facing * 3.5 * dt;
+                    }
+                } else if (footman.state === 'ATTACK_WINDUP') {
+                    footman.timer -= dt;
+                    if (footman.timer <= 0) {
+                        footman.state = 'ATTACK_ACTIVE';
+                        footman.timer = 0.20;
+                        footmanGlint.material.opacity = 0;
+                        AudioSys.playSlash(0.9);
+
+                        // If player is within range and NOT parrying/dodging, deal damage
+                        if (distF <= 2.4 && !Player.isDodging && !Player.isParrying) {
+                            Player.hp = Math.max(0, Player.hp - 20);
+                            updateHUD();
+                            AudioSys.playHit();
+                            screenShake = 0.2;
+                        }
+                    }
+                } else if (footman.state === 'ATTACK_ACTIVE') {
+                    footman.timer -= dt;
+                    if (footman.timer <= 0) {
+                        footman.state = 'AGGRO';
+                        footman.cooldown = 1.0;
+                    }
+                } else if (footman.state === 'STAGGER') {
+                    footman.timer -= dt;
+                    if (footman.timer <= 0) {
+                        footman.state = 'AGGRO';
+                        footman.isStaggered = false;
+                    }
+                }
+                footmanGroup.position.x = footman.x;
+            }
+
+            // 3. Boss Vael-Krag AI Loop
+            const distB = Math.abs(boss.x - Player.x);
+            if (distB < 15.0 && !boss.isDefeated) {
+                document.getElementById('boss-hud').style.opacity = '1';
+            }
+
+            if (!boss.isDefeated && distB < 18.0) {
+                boss.facing = Player.x > boss.x ? 1 : -1;
+                bossGroup.rotation.y = boss.facing > 0 ? Math.PI / 2 : -Math.PI / 2;
+
+                if (boss.cooldown > 0) boss.cooldown -= dt;
+
+                if (boss.state === 'IDLE' && boss.cooldown <= 0) {
+                    if (distB <= 5.0) {
+                        boss.state = 'SWEEP_WINDUP';
+                        boss.timer = 0.50; // Telegraph sweep
+                    } else {
+                        boss.state = 'SLAM_WINDUP';
+                        boss.timer = 0.70; // Telegraph seismic slam
+                    }
+                } else if (boss.state === 'SWEEP_WINDUP') {
+                    boss.timer -= dt;
+                    bellGroup.rotation.z = Math.sin((0.50 - boss.timer) * 3) * 0.8;
+                    if (boss.timer <= 0) {
+                        boss.state = 'SWEEP_ACTIVE';
+                        boss.timer = 0.30;
+                        AudioSys.playSlash(0.6);
+                        if (distB <= 5.0 && !Player.isDodging && Player.y < 2.0) {
+                            Player.hp = Math.max(0, Player.hp - 35);
+                            updateHUD();
+                            screenShake = 0.35;
+                        }
+                    }
+                } else if (boss.state === 'SWEEP_ACTIVE') {
+                    boss.timer -= dt;
+                    if (boss.timer <= 0) {
+                        boss.state = 'IDLE';
+                        boss.cooldown = 1.2;
+                        bellGroup.rotation.z = 0;
+                    }
+                } else if (boss.state === 'SLAM_WINDUP') {
+                    boss.timer -= dt;
+                    if (boss.timer <= 0) {
+                        boss.state = 'IDLE';
+                        boss.cooldown = 1.8;
+                        AudioSys.playBossSlam();
+                        screenShake = 0.45;
+
+                        // Spawn traveling floor shockwave (requires jump!)
+                        const shockMesh = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.5, 0.5, 1.2, 8),
+                            new THREE.MeshBasicMaterial({ color: boss.phase === 2 ? 0x9d4edd : 0x00d2ff })
+                        );
+                        shockMesh.rotation.z = Math.PI / 2;
+                        shockMesh.position.set(boss.x, 0.4, 0);
+                        scene.add(shockMesh);
+                        boss.shockwaves.push({ mesh: shockMesh, x: boss.x, vx: boss.facing * 9.0, life: 2.5 });
+                    }
                 }
             }
 
-            // 8. 2.5D Camera Tracking with Look-Ahead and Screen Shake
+            // Update Boss Floor Shockwaves
+            for (let i = boss.shockwaves.length - 1; i >= 0; i--) {
+                const s = boss.shockwaves[i];
+                s.x += s.vx * dt;
+                s.life -= dt;
+                s.mesh.position.x = s.x;
+
+                // Hit player if grounded
+                if (Math.abs(s.x - Player.x) < 1.2 && Player.y < 0.8 && !Player.isDodging) {
+                    Player.hp = Math.max(0, Player.hp - 30);
+                    updateHUD();
+                    screenShake = 0.3;
+                    scene.remove(s.mesh);
+                    boss.shockwaves.splice(i, 1);
+                    continue;
+                }
+
+                if (s.life <= 0) {
+                    scene.remove(s.mesh);
+                    boss.shockwaves.splice(i, 1);
+                }
+            }
+
+            // 4. Camera Follow with Dynamic Boss Framing
             const lookAhead = (Player.facingRight ? 1 : -1) * 2.2;
             const targetCamX = Player.x + lookAhead;
-            const targetCamY = Player.y + 2.4;
-            
+            const targetCamY = Player.y + 2.5;
+
             camera.position.x += (targetCamX - camera.position.x) * 0.08;
             camera.position.y += (targetCamY - camera.position.y) * 0.08;
 
             if (screenShake > 0) {
                 camera.position.x += (Math.random() - 0.5) * screenShake;
                 camera.position.y += (Math.random() - 0.5) * screenShake;
-                screenShake = Math.max(0, screenShake - dt * 1.5);
+                screenShake = Math.max(0, screenShake - dt * 1.6);
             }
 
-            // 9. Embers Particle Drift
+            // 5. Embers
             const positions = embers.geometry.attributes.position.array;
             for (let i = 1; i < emberCount * 3; i += 3) {
                 positions[i] -= 0.04;
-                if (positions[i] < 0) positions[i] = 14;
+                if (positions[i] < 0) positions[i] = 16;
             }
             embers.geometry.attributes.position.needsUpdate = true;
 
@@ -975,7 +1342,6 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Start Game Loop
         animate();
     </script>
 </body>
